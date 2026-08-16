@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A personal Across a Thousand Dead Worlds expedition archive.">
+  <title>Deep Diver // Expedition Archive</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" data-route-home href="index.html"><span class="brand-mark"></span><span data-config="accentLabel">KARUM STATION ARCHIVE NODE</span></a>
+      <nav class="nav">
+        <a data-route-home data-target="about" href="#about">ABOUT ATDW</a>
+        <a data-route-home data-target="logs" href="#logs">EXPEDITION LOGS</a>
+        <button class="audio-toggle" id="audio-toggle" type="button" aria-pressed="false" title="Toggle ambient sci-fi audio">
+          <span class="audio-indicator" aria-hidden="true"></span><span id="audio-label">AMBIENCE OFF</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="network-strip" aria-label="Karum network status" aria-live="polite">
+    <div class="shell network-strip-inner">
+      <div class="network-identity">
+        <span class="network-identity-title">KARUM NETWORK TERMINAL</span>
+        <span class="network-identity-sub">STATION NETWORK STATUS //</span>
+      </div>
+      <div class="network-metric">
+        <span>UPLINK</span>
+        <strong id="station-network-state">LINKING</strong>
+      </div>
+      <div class="network-metric network-connections">
+        <span>CONNECTIONS RECEIVED</span>
+        <strong id="station-connections">------</strong>
+      </div>
+      <div class="network-metric">
+        <span>EXPEDITIONS</span>
+        <strong id="station-expeditions">000</strong>
+      </div>
+      <div class="network-metric">
+        <span>LAST TRANSMISSION</span>
+        <strong id="station-last-transmission">—</strong>
+      </div>
+    </div>
+  </section>
+
+  <main id="home-view">
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <div class="kicker">PERSONAL ARCHIVE // ACCESS GRANTED</div>
+          <h1>Dead Worlds.<br>Living Records.</h1>
+          <p data-config="subtitle">Personal field records from the dark beyond Karum Station.</p>
+          <div class="hero-actions">
+            <a class="button" data-route-home data-target="logs" href="#logs">OPEN EXPEDITION ARCHIVE</a>
+            <a class="button secondary" data-official-url target="_blank" rel="noopener"><span data-config="officialLabel">ATDW OFFICIAL SITE</span> ↗</a>
+          </div>
+        </div>
+        <div class="orbit-display crosshair" aria-hidden="true">
+          <div class="planet"></div><div class="orbit-dot"></div><div class="orbit-label">UNVERIFIED SITE // SIGNAL LOCKED</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="section">
+      <div class="shell">
+        <div class="section-head"><div><div class="eyebrow">TRANSMISSION 00-A</div><h2>What is ATDW?</h2></div><div class="section-copy">A field archive for one Deep Diver's voyages, discoveries, mistakes, and things that should probably have stayed buried.</div></div>
+        <div class="about-grid">
+          <div class="panel"><h3>Across a Thousand Dead Worlds</h3><p data-config="intro"></p></div>
+          <div class="panel"><h3>Archive Operator</h3><p><span data-config="operator"></span><br><strong data-config="callsign"></strong></p>
+            <div class="stats">
+              <div class="stat"><strong id="stat-logs">0</strong><span>Logs Stored</span></div>
+              <div class="stat"><strong id="stat-sites">0</strong><span>Locations</span></div>
+              <div class="stat"><strong id="stat-latest">—</strong><span>Latest Log</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="logs" class="section">
+      <div class="shell">
+        <div class="section-head"><div><div class="eyebrow">KSA RECORDS // SORT: NEWEST</div><h2>Expedition Archive</h2></div><div class="section-copy">Select a record to reconstruct the session log.</div></div>
+        <div id="archive-list" class="archive-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <main id="session-view" hidden>
+    <section class="log-hero">
+      <div class="log-shell">
+        <a class="back-link" data-route-home data-target="logs" href="#logs">← RETURN TO EXPEDITION ARCHIVE</a>
+        <div class="eyebrow" id="session-id">EXPEDITION LOG</div>
+        <h1 id="session-title">Loading Record...</h1>
+        <p id="session-summary" class="section-copy"></p>
+      </div>
+    </section>
+    <div class="log-shell">
+      <div class="log-dossier">
+        <div class="dossier-item"><small>Date</small><span id="session-date">—</span></div>
+        <div class="dossier-item"><small>Location</small><span id="session-location">—</span></div>
+        <div class="dossier-item"><small>Status</small><span id="session-status">—</span></div>
+        <div class="dossier-item"><small>Source</small><span id="session-source">—</span></div>
+      </div>
+      <article id="session-body" class="prose"></article>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="shell footer-inner">
+      <span data-config="footerNote"></span>
+      <a class="audio-credit" id="audio-credit" target="_blank" rel="noopener">AMBIENCE // CC0 AUDIO</a>
+      <span id="footer-terminal-state">END OF TRANSMISSION //</span>
+    </div>
+  </footer>
+
+  <script src="data/config.js"></script>
+  <script src="data/sessions.js"></script>
+  <script>window.goatcounter = { no_onload: true };</script>
+  <script id="goatcounter-script" data-goatcounter="https://bonedudegamestudiosllc.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
