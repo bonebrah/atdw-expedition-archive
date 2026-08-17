@@ -208,7 +208,7 @@ h1 { font-family: var(--mono); line-height: .98; letter-spacing: -.045em; font-s
 .log-hero { padding:64px 0 34px; }
 .log-hero h1 { font-size:clamp(2.6rem, 6vw, 5.4rem); max-width:1000px; }
 .log-shell { width:min(860px, calc(100% - 36px)); margin:0 auto; }
-.log-dossier { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin:18px 0 42px; }
+.log-dossier { display:grid; grid-template-columns:repeat(5,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin:18px 0 42px; }
 .dossier-item { background:#071013; padding:13px 15px; }
 .dossier-item small { display:block; color:var(--muted); font:700 .58rem var(--mono); letter-spacing:.13em; text-transform:uppercase; margin-bottom:4px; }
 .dossier-item span { font:700 .74rem var(--mono); color:#c9d8d6; }
@@ -229,7 +229,7 @@ h1 { font-family: var(--mono); line-height: .98; letter-spacing: -.045em; font-s
 }
 .network-strip-inner {
   display: grid;
-  grid-template-columns: 1.45fr .65fr 1fr .7fr 1fr;
+  grid-template-columns: 1.3fr .55fr 1fr .65fr .7fr 1fr;
   align-items: stretch;
   min-height: 66px;
   border-left: 1px solid rgba(123,246,216,.12);
@@ -322,3 +322,124 @@ h1 { font-family: var(--mono); line-height: .98; letter-spacing: -.045em; font-s
   .network-connections strong { font-size: .9rem; }
 }
 
+
+/* Deep Diver personnel archive */
+.diver-archive { display:grid; gap:18px; }
+.diver-dossier {
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(11,23,28,.82), rgba(4,10,12,.82));
+  box-shadow:var(--shadow);
+}
+.diver-dossier[open] { border-color:rgba(123,246,216,.32); }
+.diver-dossier.is-deceased { border-color:rgba(255,141,120,.18); }
+.diver-dossier.is-deceased[open] { border-color:rgba(255,141,120,.34); }
+.diver-summary {
+  list-style:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  padding:20px 22px;
+  user-select:none;
+  position:relative;
+}
+.diver-summary::-webkit-details-marker { display:none; }
+.diver-summary::after {
+  content:"+";
+  position:absolute;
+  right:10px;
+  top:8px;
+  color:rgba(123,246,216,.45);
+  font:700 .72rem var(--mono);
+}
+.diver-dossier[open] > .diver-summary::after { content:"−"; }
+.diver-dossier.is-deceased .diver-summary::after { color:rgba(255,141,120,.5); }
+.diver-primary { min-width:0; }
+.diver-label {
+  display:block;
+  color:var(--accent);
+  font:700 .61rem var(--mono);
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+.diver-dossier.is-deceased .diver-label { color:var(--danger); }
+.diver-primary strong {
+  display:block;
+  color:#e0ecea;
+  font:700 clamp(1.2rem, 2.4vw, 1.65rem) var(--mono);
+  letter-spacing:-.02em;
+  text-transform:uppercase;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.diver-metrics { display:flex; align-items:center; justify-content:flex-end; gap:26px; }
+.diver-metrics > span:not(.diver-toggle-label) { display:flex; flex-direction:column; min-width:88px; }
+.diver-metrics small {
+  color:#607572;
+  font:700 .52rem var(--mono);
+  letter-spacing:.11em;
+  text-transform:uppercase;
+}
+.diver-metrics b {
+  color:#a9bcba;
+  font:700 .75rem var(--mono);
+  letter-spacing:.07em;
+  margin-top:2px;
+}
+.diver-dossier.is-active .diver-metrics b { color:var(--accent-2); }
+.diver-dossier.is-deceased .diver-metrics b { color:#c49a91; }
+.diver-toggle-label {
+  min-width:94px;
+  text-align:right;
+  color:#718784;
+  font:700 .56rem var(--mono);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.diver-record-body { border-top:1px solid rgba(123,246,216,.12); padding:18px; }
+.diver-dossier.is-deceased .diver-record-body { border-top-color:rgba(255,141,120,.12); }
+.diver-record-note {
+  margin:0 0 14px;
+  color:#5f7471;
+  font:700 .56rem var(--mono);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.diver-dossier.is-deceased .log-card::after { border-top-color:rgba(255,141,120,.28); }
+.diver-dossier.is-deceased .log-number { color:#c99084; }
+.diver-dossier.is-deceased .log-card:hover { border-color:rgba(255,141,120,.38); }
+
+@media (max-width: 900px) {
+  .diver-summary { align-items:flex-start; flex-direction:column; gap:14px; }
+  .diver-metrics { width:100%; justify-content:flex-start; flex-wrap:wrap; gap:14px 24px; }
+  .diver-toggle-label { margin-left:auto; }
+}
+
+@media (max-width: 780px) {
+  .network-strip-inner { grid-template-columns:1fr 1fr; }
+  .network-identity { grid-column:1 / -1; border-bottom:1px solid rgba(123,246,216,.11); }
+  .network-metric { grid-column:auto; border-top:0; border-right:1px solid rgba(123,246,216,.11); }
+  .network-metric:nth-child(3),
+  .network-metric:nth-child(5) { border-right:0; }
+  .network-metric:last-child { grid-column:1 / -1; border-top:1px solid rgba(123,246,216,.11); border-right:0; }
+  .log-dossier { grid-template-columns:1fr 1fr; }
+}
+
+@media (max-width: 560px) {
+  .diver-summary { padding:17px 16px; }
+  .diver-record-body { padding:12px; }
+  .diver-metrics { display:grid; grid-template-columns:1fr 1fr; }
+  .diver-toggle-label { grid-column:1 / -1; margin-left:0; text-align:left; }
+  .archive-grid { gap:10px; }
+  .log-card { padding:18px; }
+}
+
+@media (max-width: 480px) {
+  .network-strip-inner { grid-template-columns:1fr 1fr; }
+  .network-identity { grid-column:1 / -1; }
+  .network-metric { grid-column:auto; border-top:0; }
+  .network-metric:last-child { grid-column:1 / -1; border-top:1px solid rgba(123,246,216,.11); }
+  .log-dossier { grid-template-columns:1fr; }
+}

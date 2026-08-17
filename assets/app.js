@@ -6,6 +6,10 @@
     return String(value).replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
   }
 
+  function slugify(value = "") {
+    return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  }
+
   function inlineMarkdown(text) {
     let safe = escapeHtml(text);
     safe = safe.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
@@ -133,25 +137,52 @@
       updateUi("off");
     }
 
-    // The same Audio object remains alive while the archive swaps between
-    // the home view and log views, so enabled ambience plays continuously.
     window.ATDW_AMBIENT_AUDIO = audio;
+  }
+
+  function resolveSession(identifier) {
+    if (!identifier) return null;
+    const raw = String(identifier);
+    const exact = sessions.find(s => String(s.key) === raw);
+    if (exact) return exact;
+
+    // Backward compatibility for old links such as ?log=001. If several
+    // Divers now have LOG 001, the newest matching record is used.
+    return sessions.find(s => String(s.id) === raw) || null;
+  }
+
+  function buildDiverGroups() {
+    const map = new Map();
+    sessions.forEach(session => {
+      const key = session.diver_slug || slugify(session.diver) || "diver";
+      if (!map.has(key)) map.set(key, { key, name: session.diver || "UNASSIGNED DIVER", sessions: [] });
+      map.get(key).sessions.push(session);
+    });
+
+    const groups = Array.from(map.values());
+    groups.forEach(group => {
+      group.sessions.sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.id).localeCompare(String(a.id)));
+      group.latest = group.sessions[0];
+      group.status = group.sessions.some(s => s.diver_status === "deceased") ? "deceased" : "active";
+    });
+
+    groups.sort((a, b) => {
+      if (a.status !== b.status) return a.status === "active" ? -1 : 1;
+      const dateSort = String(b.latest?.date || "").localeCompare(String(a.latest?.date || ""));
+      return dateSort || a.name.localeCompare(b.name);
+    });
+    return groups;
   }
 
   let goatCounterInitialTracked = false;
 
   function goatCounterPathForSession(session) {
     if (!session) return "/";
-    const slug = String(session.source || session.title || session.id)
-      .replace(/\.md$/i, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-    return `/log/${slug || session.id}`;
+    const titleSlug = slugify(session.title || session.source || session.id);
+    return `/diver/${session.diver_slug || slugify(session.diver)}/log/${session.id}-${titleSlug}`;
   }
 
   function trackGoatCounter(path, title) {
-    // count.js is async. Retry briefly if navigation happens before it is ready.
     let attempts = 0;
     const send = () => {
       if (window.goatcounter && typeof window.goatcounter.count === "function") {
@@ -166,7 +197,7 @@
 
   function trackCurrentView(session) {
     const path = session ? goatCounterPathForSession(session) : "/";
-    const title = session ? `Expedition ${session.id} — ${session.title}` : (cfg.archiveName || "Expedition Archive");
+    const title = session ? `${session.diver} — Expedition ${session.id} — ${session.title}` : (cfg.archiveName || "Expedition Archive");
     trackGoatCounter(path, title);
   }
 
@@ -207,39 +238,77 @@
     document.querySelectorAll("[data-official-url]").forEach(el => el.href = cfg.officialUrl || "#");
   }
 
+  function renderLogCard(session) {
+    return `
+      <a class="log-card" data-session-key="${escapeHtml(session.key)}" href="?log=${encodeURIComponent(session.key)}">
+        <div class="log-meta">
+          <span class="log-number">EXPEDITION ${escapeHtml(session.id)}</span>
+          <span>${escapeHtml(session.date)}</span>
+          <span>${escapeHtml(session.location)}</span>
+          <span class="status">${escapeHtml(session.status)}</span>
+        </div>
+        <h3>${escapeHtml(session.title)}</h3>
+        <p>${escapeHtml(session.summary)}</p>
+        <div class="tags">${(session.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}</div>
+      </a>`;
+  }
+
   function renderArchive() {
     const archive = document.getElementById("archive-list");
     if (!archive) return;
-    const uniqueLocations = new Set(sessions.map(s => s.location).filter(Boolean));
-    document.getElementById("stat-logs").textContent = sessions.length;
-    document.getElementById("stat-sites").textContent = uniqueLocations.size;
-    document.getElementById("stat-latest").textContent = sessions[0]?.id || "—";
 
+    const groups = buildDiverGroups();
+    const latest = sessions[0];
+
+    document.getElementById("stat-logs").textContent = sessions.length;
+    document.getElementById("stat-divers").textContent = groups.length;
+    document.getElementById("stat-latest").textContent = latest ? `${latest.diver} / ${latest.id}` : "—";
+
+    const stationDivers = document.getElementById("station-divers");
     const stationExpeditions = document.getElementById("station-expeditions");
     const stationLastTransmission = document.getElementById("station-last-transmission");
+    if (stationDivers) stationDivers.textContent = String(groups.length).padStart(3, "0");
     if (stationExpeditions) stationExpeditions.textContent = String(sessions.length).padStart(3, "0");
     if (stationLastTransmission) {
-      const latestDate = sessions[0]?.date;
+      const latestDate = latest?.date;
       stationLastTransmission.textContent = latestDate ? String(latestDate).replaceAll("-", ".") : "—";
     }
 
     if (!sessions.length) {
-      archive.innerHTML = '<div class="empty">NO EXPEDITION RECORDS FOUND. Add a Markdown file to <code>/logs</code> and run <code>python build.py</code>.</div>';
+      archive.innerHTML = '<div class="empty">NO DEEP DIVER RECORDS FOUND. Add a Markdown file to <code>/logs</code> and push it to GitHub.</div>';
       return;
     }
 
-    archive.innerHTML = sessions.map(s => `
-      <a class="log-card" data-session-id="${escapeHtml(s.id)}" href="?log=${encodeURIComponent(s.id)}">
-        <div class="log-meta">
-          <span class="log-number">LOG ${escapeHtml(s.id)}</span>
-          <span>${escapeHtml(s.date)}</span>
-          <span>${escapeHtml(s.location)}</span>
-          <span class="status">${escapeHtml(s.status)}</span>
-        </div>
-        <h3>${escapeHtml(s.title)}</h3>
-        <p>${escapeHtml(s.summary)}</p>
-        <div class="tags">${(s.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}</div>
-      </a>`).join("");
+    archive.innerHTML = groups.map(group => {
+      const isDeceased = group.status === "deceased";
+      const transmissionLabel = isDeceased ? "FINAL TRANSMISSION" : "LAST TRANSMISSION";
+      return `
+        <details class="diver-dossier ${isDeceased ? "is-deceased" : "is-active"}" ${isDeceased ? "" : "open"}>
+          <summary class="diver-summary">
+            <div class="diver-primary">
+              <span class="diver-label">DEEP DIVER RECORD // ${isDeceased ? "DECEASED" : "ACTIVE"}</span>
+              <strong>${escapeHtml(group.name)}</strong>
+            </div>
+            <div class="diver-metrics">
+              <span><small>EXPEDITIONS</small><b>${String(group.sessions.length).padStart(3, "0")}</b></span>
+              <span><small>${transmissionLabel}</small><b>${escapeHtml(String(group.latest?.date || "—").replaceAll("-", "."))}</b></span>
+              <span class="diver-toggle-label">${isDeceased ? "OPEN ARCHIVE" : "COLLAPSE"}</span>
+            </div>
+          </summary>
+          <div class="diver-record-body">
+            <div class="diver-record-note">${isDeceased ? "PERSONNEL FILE CLOSED // HISTORICAL RECORD PRESERVED" : "PERSONNEL FILE ACTIVE // NEW TRANSMISSIONS EXPECTED"}</div>
+            <div class="archive-grid">${group.sessions.map(renderLogCard).join("")}</div>
+          </div>
+        </details>`;
+    }).join("");
+
+    archive.querySelectorAll("details.diver-dossier").forEach(details => {
+      details.addEventListener("toggle", () => {
+        const label = details.querySelector(".diver-toggle-label");
+        if (!label) return;
+        label.textContent = details.open ? "COLLAPSE" : (details.classList.contains("is-deceased") ? "OPEN ARCHIVE" : "EXPAND");
+      });
+    });
   }
 
   function setFooterState(isSession) {
@@ -267,8 +336,8 @@
     });
   }
 
-  function showSession(id, updateHistory) {
-    const s = sessions.find(x => String(x.id) === String(id));
+  function showSession(identifier, updateHistory) {
+    const s = resolveSession(identifier);
     if (!s) {
       showHome("logs", updateHistory);
       return;
@@ -279,19 +348,20 @@
     if (home) home.hidden = true;
     if (session) session.hidden = false;
 
-    document.title = `${s.title} // ${cfg.archiveName || "Expedition Archive"}`;
+    document.title = `${s.diver} // ${s.title}`;
     document.getElementById("session-title").textContent = s.title;
-    document.getElementById("session-id").textContent = `EXPEDITION LOG ${s.id}`;
+    document.getElementById("session-id").textContent = `${String(s.diver).toUpperCase()} // EXPEDITION LOG ${s.id}`;
+    document.getElementById("session-diver").textContent = s.diver;
     document.getElementById("session-date").textContent = s.date;
     document.getElementById("session-location").textContent = s.location;
     document.getElementById("session-status").textContent = s.status;
-    document.getElementById("session-source").textContent = s.source;
+    document.getElementById("session-diver-status").textContent = s.diver_status === "deceased" ? "DECEASED" : "ACTIVE";
     document.getElementById("session-summary").textContent = s.summary;
     document.getElementById("session-body").innerHTML = renderMarkdown(s.body);
     setFooterState(true);
 
     if (updateHistory) {
-      history.pushState({ view: "session", id: s.id }, "", `${location.pathname}?log=${encodeURIComponent(s.id)}`);
+      history.pushState({ view: "session", key: s.key }, "", `${location.pathname}?log=${encodeURIComponent(s.key)}`);
       trackCurrentView(s);
     }
     window.scrollTo({ top: 0, behavior: updateHistory ? "smooth" : "auto" });
@@ -300,7 +370,7 @@
   function routeFromLocation(shouldTrack = false) {
     const id = new URLSearchParams(location.search).get("log");
     if (id) {
-      const s = sessions.find(x => String(x.id) === String(id));
+      const s = resolveSession(id);
       showSession(id, false);
       if (shouldTrack && s) trackCurrentView(s);
       return;
@@ -314,10 +384,10 @@
     document.addEventListener("click", event => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 
-      const logLink = event.target.closest("a[data-session-id]");
+      const logLink = event.target.closest("a[data-session-key]");
       if (logLink) {
         event.preventDefault();
-        showSession(logLink.dataset.sessionId, true);
+        showSession(logLink.dataset.sessionKey, true);
         return;
       }
 
@@ -338,12 +408,9 @@
   bindRouting();
   routeFromLocation(false);
 
-  // Because count.js is configured with no_onload, we explicitly count the
-  // initial archive/log route once. Later SPA navigations are counted above.
   if (!goatCounterInitialTracked) {
     goatCounterInitialTracked = true;
     const initialId = new URLSearchParams(location.search).get("log");
-    const initialSession = sessions.find(x => String(x.id) === String(initialId));
-    trackCurrentView(initialSession || null);
+    trackCurrentView(resolveSession(initialId) || null);
   }
 })();
