@@ -16,6 +16,19 @@ def parse_value(value):
     return value
 
 
+def slugify(value):
+    value = str(value or "").strip().lower()
+    value = re.sub(r"[^a-z0-9]+", "-", value)
+    return value.strip("-") or "diver"
+
+
+def normalize_diver_status(value):
+    value = str(value or "active").strip().lower()
+    if value in {"dead", "deceased", "killed", "lost"}:
+        return "deceased"
+    return "active"
+
+
 def parse_log(path: Path):
     text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
     meta = {}
@@ -32,9 +45,16 @@ def parse_log(path: Path):
     tags = [x.strip() for x in raw_tags.split(",") if x.strip()]
     session_id = str(meta.get("id") or path.stem.split("-", 1)[0]).zfill(3)
     title = meta.get("title") or re.sub(r"[-_]", " ", path.stem).title()
+    diver = meta.get("diver", "UNASSIGNED DIVER").strip() or "UNASSIGNED DIVER"
+    diver_status = normalize_diver_status(meta.get("diver_status", "active"))
+    diver_slug = slugify(diver)
 
     return {
         "id": session_id,
+        "key": f"{diver_slug}-{session_id}",
+        "diver": diver,
+        "diver_slug": diver_slug,
+        "diver_status": diver_status,
         "title": title,
         "date": meta.get("date", "DATE REDACTED"),
         "location": meta.get("location", "LOCATION UNKNOWN"),
@@ -48,7 +68,17 @@ def parse_log(path: Path):
 
 logs = sorted(LOG_DIR.glob("*.md"))
 sessions = [parse_log(path) for path in logs]
-sessions.sort(key=lambda x: (x["date"], x["id"]), reverse=True)
+sessions.sort(key=lambda x: (x["date"], x["diver"].lower(), x["id"]), reverse=True)
+
+# Catch the most common metadata mistake before deployment.
+seen = {}
+for session in sessions:
+    if session["key"] in seen:
+        raise SystemExit(
+            f"Duplicate expedition number for {session['diver']}: LOG {session['id']} "
+            f"appears in both {seen[session['key']]} and {session['source']}."
+        )
+    seen[session["key"]] = session["source"]
 
 OUT.parent.mkdir(parents=True, exist_ok=True)
 OUT.write_text(

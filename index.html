@@ -13,7 +13,7 @@
       <a class="brand" data-route-home href="index.html"><span class="brand-mark"></span><span data-config="accentLabel">KARUM STATION ARCHIVE NODE</span></a>
       <nav class="nav">
         <a data-route-home data-target="about" href="#about">ABOUT ATDW</a>
-        <a data-route-home data-target="logs" href="#logs">EXPEDITION LOGS</a>
+        <a data-route-home data-target="logs" href="#logs">DIVER RECORDS</a>
         <button class="audio-toggle" id="audio-toggle" type="button" aria-pressed="false" title="Toggle ambient sci-fi audio">
           <span class="audio-indicator" aria-hidden="true"></span><span id="audio-label">AMBIENCE OFF</span>
         </button>
@@ -34,6 +34,10 @@
       <div class="network-metric network-connections">
         <span>CONNECTIONS RECEIVED</span>
         <strong id="station-connections">------</strong>
+      </div>
+      <div class="network-metric">
+        <span>DEEP DIVERS</span>
+        <strong id="station-divers">000</strong>
       </div>
       <div class="network-metric">
         <span>EXPEDITIONS</span>
@@ -66,13 +70,13 @@
 
     <section id="about" class="section">
       <div class="shell">
-        <div class="section-head"><div><div class="eyebrow">TRANSMISSION 00-A</div><h2>What is ATDW?</h2></div><div class="section-copy">A field archive for one Deep Diver's voyages, discoveries, mistakes, and things that should probably have stayed buried.</div></div>
+        <div class="section-head"><div><div class="eyebrow">TRANSMISSION 00-A</div><h2>What is ATDW?</h2></div><div class="section-copy">Personnel dossiers and expedition records for the Deep Divers who ventured beyond Karum Station — including those who never came back.</div></div>
         <div class="about-grid">
           <div class="panel"><h3>Across a Thousand Dead Worlds</h3><p data-config="intro"></p></div>
-          <div class="panel"><h3>Archive Operator</h3><p><span data-config="operator"></span><br><strong data-config="callsign"></strong></p>
+          <div class="panel"><h3>Campaign Archive</h3><p>Every Deep Diver receives a personnel dossier. Active records remain open; deceased Divers are preserved as collapsible archive files.</p>
             <div class="stats">
-              <div class="stat"><strong id="stat-logs">0</strong><span>Logs Stored</span></div>
-              <div class="stat"><strong id="stat-sites">0</strong><span>Locations</span></div>
+              <div class="stat"><strong id="stat-divers">0</strong><span>Deep Divers</span></div>
+              <div class="stat"><strong id="stat-logs">0</strong><span>Expeditions</span></div>
               <div class="stat"><strong id="stat-latest">—</strong><span>Latest Log</span></div>
             </div>
           </div>
@@ -82,8 +86,8 @@
 
     <section id="logs" class="section">
       <div class="shell">
-        <div class="section-head"><div><div class="eyebrow">KSA RECORDS // SORT: NEWEST</div><h2>Expedition Archive</h2></div><div class="section-copy">Select a record to reconstruct the session log.</div></div>
-        <div id="archive-list" class="archive-grid"></div>
+        <div class="section-head"><div><div class="eyebrow">KSA PERSONNEL RECORDS // ACTIVE FIRST</div><h2>Deep Diver Archive</h2></div><div class="section-copy">Expeditions are grouped by Deep Diver. Active personnel files remain open; deceased records can be expanded when needed.</div></div>
+        <div id="archive-list" class="diver-archive"></div>
       </div>
     </section>
   </main>
@@ -92,17 +96,18 @@
     <section class="log-hero">
       <div class="log-shell">
         <a class="back-link" data-route-home data-target="logs" href="#logs">← RETURN TO EXPEDITION ARCHIVE</a>
-        <div class="eyebrow" id="session-id">EXPEDITION LOG</div>
+        <div class="eyebrow" id="session-id">DEEP DIVER // EXPEDITION LOG</div>
         <h1 id="session-title">Loading Record...</h1>
         <p id="session-summary" class="section-copy"></p>
       </div>
     </section>
     <div class="log-shell">
       <div class="log-dossier">
+        <div class="dossier-item"><small>Deep Diver</small><span id="session-diver">—</span></div>
         <div class="dossier-item"><small>Date</small><span id="session-date">—</span></div>
         <div class="dossier-item"><small>Location</small><span id="session-location">—</span></div>
         <div class="dossier-item"><small>Status</small><span id="session-status">—</span></div>
-        <div class="dossier-item"><small>Source</small><span id="session-source">—</span></div>
+        <div class="dossier-item"><small>Record State</small><span id="session-diver-status">—</span></div>
       </div>
       <article id="session-body" class="prose"></article>
     </div>
